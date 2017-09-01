@@ -1,0 +1,146 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    font-family: 'helvetica neue', arial, sans-serif;
+}
+
+button {
+    font-size: 13px;
+    border: 1px solid #ddd;
+    background: #ddd;
+    padding: 3px 10px;
+    border-radius: 3px;
+}
+
+.bank {
+    display: flex;
+    min-height: 100%;
+}
+.actions, .events {
+    width: 50%;
+    box-sizing: border-box;
+    min-height: 100%;
+}
+h1 {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+}
+.events {
+    color: #fff;
+    background: #4f4f65;
+    padding: 15px;
+    box-shadow: inset 3px 0 10px rgba(0,0,0,0.2);
+}
+.event {
+    color: #ddd;
+}
+.event-name {
+    color: #fff;
+}
+.event-name-opened {
+    color: #13ffb6;
+}
+.event-name-closed {
+    color: #ffdb13;
+}
+.event-name-withdrawed {
+    color: #ff139d;
+}
+.event-name-deposited {
+    color: #13e5ff;
+}
+
+.command-btn {
+    line-height: 16px;
+    position: relative;
+    padding-left: 20px;
+}
+.command-btn:before {
+    vertical-align: middle;
+    line-height: 16px;
+    display: inline-block;
+    content: '';
+    width: 10px;
+    margin-right: 5px;
+    position: absolute;
+    border-radius: 3px 0 0 3px;
+    left: -1px;
+    top: -1px;
+    bottom: -1px;
+}
+
+.command-open:before {
+    background: #13ffb6;
+}
+.command-close:before {
+    background: #ffdb13;
+}
+.command-withdraw:before {
+    background: #ff139d;
+}
+.command-deposit:before {
+    background: #13e5ff;
+}
+
+.events pre {
+    background: #2d2d3e;
+    color: #fff;
+    padding: 10px;
+}
+.events pre div + div {
+    border-top: 1px solid #4f4f65;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+.account {
+    padding: 10px;
+    background: #fafafa;
+    margin-top: 10px;
+    border: 2px solid #ddd;
+}
+.account .btns {
+    margin-top: 10px;
+}
+
+.read-model-related,
+.header {
+    padding: 10px;
+    background: #4d5098;
+    color: #fff;
+}
+.header {
+    padding-bottom: 0;
+}
+.header h1 {
+    display: inline-block;
+    border-bottom: 3px solid #686cce;
+}
+.commands,
+.read-model {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 10px;
+    box-shadow: 0 3px 3px rgba(0,0,0,0.1);
+}
+.commands .command {
+    margin: 10px 0;
+}
+.read-model {
+    padding: 10px;
+}
+.status {
+    padding: 3px 5px;
+    background: #ffd9d9;
+    display: inline-block;
+    border-radius: 5px;
+    font-size: 12px;
+}
+small {
+    color: #777;
+}

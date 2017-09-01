@@ -1,0 +1,149 @@
+<template>
+<div class="bank">
+  <div class="actions">
+    <div class="header">
+      <h1>KoalaBank</h1>
+    </div>
+    <div class="read-model-related">
+      <button type="button" v-on:click="cleanReadModel()">Clean read model</button>
+      <button type="button" v-on:click="replayFromEvents()">Replay from events</button>
+      <button type="button" v-on:click="replayFromEventsSlowly()">Replay from events slowly</button>
+    </div>
+
+    <div class="commands">
+      <h1>Open Command</h1>
+      <div class="command">
+        <input type="text" v-model="name">
+        <button type="button" v-on:click="openAccount(name)" class="command-btn command-open">Open Account</button>
+      </div>
+    </div>
+
+    <div class="read-model">
+      <h1>Read Model (accounts)</h1>
+      <div v-if="accounts.length == 0" class="account">
+        Read model is empty.
+      </div>
+      <div v-for="account in accounts" :key="account.id" class="account">
+        <div>{{ account.name }} <small>{{ account.id }}</small> <span v-if="account.closed" class="status">Closed</span></div>
+        <div>$ {{ account.balance }}</div>
+        <div v-if="! account.closed" class="btns">
+          <button type="button" v-on:click="depositAccount(account.id, 100)" class="command-btn command-deposit">Deposit $100</button>
+          <button type="button" v-on:click="withdrawAccount(account.id, 100)" class="command-btn command-withdraw">Withdraw $100</button>
+          <button type="button" v-on:click="closeAccount(account.id)" class="command-btn command-close">Close Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="events">
+    <h1>Events <button v-on:click="cleanup()">Remove all</button></h1>
+    <pre v-if="events.length > 0"><div v-for="event in events" :key="event.id" class="event"><span class="event-name" :class="eventClassName(event)">{{ event.payload.constructor.name }}</span> {{ event.payload }}</div></pre>
+    <pre v-if="events.length == 0">No event recorded.</pre>
+  </div>
+</div>
+</template>
+
+<script>
+import './bank.css'
+
+import LocalStorageEventStore from '../es/event-store/local-storage'
+import EventBus from '../es/event-handling/event-bus'
+import Repository from '../es/event-sourcing/repository'
+import CommandBus from '../es/command-handling/command-bus'
+import generatedId from '../es/uuid-generator'
+
+import BankAccount from '../bank/bank-account'
+import BankAccountCommandHandler from '../bank/bank-account-command-handler'
+import AccountsSubscriber from '../bank/subscriber/accounts-subscriber'
+import SimpleSubscriber from '../bank/subscriber/simple-subscriber'
+import * as Commands from '../bank/command'
+import * as Events from '../bank/event'
+
+export default {
+  name: 'bank',
+  data: function () {
+    return {
+      name: 'Koala',
+      events: [],
+      accounts: []
+    }
+  },
+  created: function () {
+    this.eventStore = new LocalStorageEventStore(Events)
+    this.eventBus = new EventBus()
+
+    this.eventBus.subscribe(new AccountsSubscriber(this.accounts))
+    this.eventBus.subscribe(new SimpleSubscriber(v => this.loadCurrentEvents()))
+
+    var repository = new Repository(this.eventStore, this.eventBus, BankAccount)
+    var bankAccountCommandHandler = new BankAccountCommandHandler(repository)
+
+    this.commandBus = new CommandBus()
+    this.commandBus.subscribe(bankAccountCommandHandler)
+  },
+  mounted: function () {
+    this.replayFromEvents()
+  },
+  methods: {
+    eventClassName: function (event) {
+      return 'event-name-' + event.payload.constructor.name.replace('Event', '').toLowerCase()
+    },
+    cleanReadModel: function () {
+      while (this.accounts.length > 0) this.accounts.pop()
+    },
+
+    replayFromEvents: function () {
+      this.cleanReadModel()
+      this.eventStore.fetch(v => v, event => this.eventBus.publish([event.payload]))
+    },
+
+    replayFromEventsSlowly: function () {
+      this.cleanReadModel()
+      var events = []
+      this.eventStore.fetch(v => v, event => events.push(event.payload))
+
+      this.playEventWithDelay(events)
+    },
+
+    playEventWithDelay: function (queue) {
+      var event = queue.shift()
+      if (!event) return
+
+      this.eventBus.publish([event])
+      if (queue.length === 0) return
+
+      setTimeout(() => {
+        this.playEventWithDelay(queue)
+      }, 500)
+    },
+
+    openAccount: function (name) {
+      var id = generatedId()
+      this.commandBus.dispatch(new Commands.OpenCommand(id, name))
+    },
+
+    withdrawAccount: function (id, amount) {
+      this.commandBus.dispatch(new Commands.WithdrawCommand(id, amount))
+    },
+
+    depositAccount: function (id, amount) {
+      this.commandBus.dispatch(new Commands.DepositCommand(id, amount))
+    },
+
+    closeAccount: function (id, amount) {
+      this.commandBus.dispatch(new Commands.CloseCommand(id))
+    },
+
+    loadCurrentEvents: function () {
+      // LocalStorageEventStore specific implementation.
+      this.events = this.eventStore.getStorage().reverse()
+    },
+
+    cleanup: function () {
+      // LocalStorageEventStore specific implementation.
+      window.localStorage.removeItem('event-store')
+      this.loadCurrentEvents()
+    }
+  }
+}
+</script>
